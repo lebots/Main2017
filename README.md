@@ -7,12 +7,12 @@ Main Robot code for Vex Starstruck
 | LHug     | 1      |
 | L1Arm    | 2      |
 | L2Arm    | 3      |
-| R1Arm    | 4      |
-| R2Arm    | 5      |
-| FLDrive  | 6      |
-| BLDrive  | 7      |
-| FRDrive  | 8      |
-| BRDrive  | 9      |
+| L3Arm    | 4      |
+| LDrive   | 5      |
+| R1Arm    | 6      |
+| R2Arm    | 7      |
+| R3Arm    | 8      |
+| RDrive   | 9      |
 | RHug     | 10     |
 
 ### Sensor ports
