@@ -63,11 +63,20 @@ int armVel = 0; // Velocity of arm
 int armAngle = 0; // Angle of the arm
 int hugAngle = 0; // Angle of the hug
 
-int hugTargetAngle 	= 0; // Target angle of hugger
+int hugTargetAngle	= 1300; // Target angle of hugger
 int hugError 		= 0; // Hug angle error for PID
 int hugIntegral 	= 0; // Hug integral for PID
 int hugDeriv 		= 0; // Hug deriv for PID
 int hugPrevError 	= 0; // Hug prev error for PID
+
+int armTargetAngle	= 2700; // Target angle of arm
+int armError 		= 0; // Arm angle error for PID
+int armIntegral 	= 0; // Arm integral for PID
+int armDeriv 		= 0; // Arm deriv for PID
+int armPrevError 	= 0; // Arm prev error for PID
+
+bool climbing = false;
+bool wasClimbing = false;
 
 void updateJoysticks() {
 
@@ -126,18 +135,11 @@ void updateSensors() {
 }
 
 void pre_auton() {
-  // Set bStopTasksBetweenModes to false if you want to keep user created tasks
-  // running between Autonomous and Driver controlled modes. You will need to
-  // manage all user created tasks if set to false.
   bStopTasksBetweenModes = true;
+  updateSensors();
 
-	// Set bDisplayCompetitionStatusOnLcd to false if you don't want the LCD
-	// used by the competition include file, for example, you might want
-	// to display your team name on the LCD in this function.
-	// bDisplayCompetitionStatusOnLcd = false;
-
-  // All activities that occur before the competition starts
-  // Example: clearing encoders, setting servo positions, ...
+  armTargetAngle = armAngle;
+  hugTargetAngle = hugAngle;
 }
 
 
@@ -152,42 +154,76 @@ task usercontrol() {
 		updateJoysticks();
 		updateSensors();
 
-		hugError = hugTargetAngle - hugAngle;
-		hugIntegral += hugError;
-		hugDeriv = hugPrevError - hugError;
-		hugVel = (0.02 * hugError) + (0.0 * hugIntegral) + (0.0 * hugDeriv);
 
+		/*
+		* Arm Code :/
+		*/
+		climbing = (bool)LDown;
+		if (LDown) {
+			armVel = -127;
+			climbing = true;
+		} else {
+			climbing = false;
+		}
 
+		if (LUp)	armTargetAngle = 925;
+		if (LRight)	armTargetAngle = 1250;
+		if (LLeft)	armTargetAngle = 2770;
 
-		if (LBUp)			armVel = 127;
+		if (!climbing && wasClimbing) {
+			armTargetAngle = armAngle;
+		}
+
+		if (!climbing) {
+			armError = -(armTargetAngle - armAngle);
+			armIntegral += armError;
+			armDeriv = armPrevError - armError;
+			armVel = (0.9 * armError) + (0.0 * armIntegral) + (0.0 * armDeriv);
+			armPrevError = armError;
+			if (armVel < -31) armVel = 31 * (armVel/127) * (-armVel/127);
+		}
+
+		if (armTargetAngle == 925 && armError < 50) armVel = 0;
+		if (abs(armVel) < 25) armVel = 0;
+
+		/*if (LBUp)			armVel = 127;
 		else if (LBDown)	armVel = -31;
 		else if (LDown)		armVel = -127;
-		else				armVel = 0;
+		else				armVel = 0;*/
 
+
+		/*
+		* Hug code :)
+		*/
 		if (RUp)			hugTargetAngle = 2700;
 		if (RDown)			hugTargetAngle = 300;
 		if (RRight)			hugTargetAngle = 1300;
 
-		if (RBUp)			hugVel = 50;
+		/*if (RBUp)			hugVel = 50;
 		else if (RBDown)	hugVel = -50;
-		else				hugVel = 0;
+		else				hugVel = 0;*/
 
-		/*hugError = hugAngle - hugTargetAngle;
+		hugError = hugAngle - hugTargetAngle;
 		hugIntegral += hugError;
 		hugDeriv = hugPrevError - hugError;
 		hugVel = (0.1 * hugError) + (0.0 * hugIntegral) + (1.0 * hugDeriv);
 		hugPrevError = hugError;
 
-		hugVel = hugVel / 2;
+		if (hugVel > 50)	hugVel = 50;
+		if (hugVel < -50)	hugVel = -50;
+		if (abs(hugVel) < 15) hugVel = 0;
 
-		if (abs(hugVel) < 15) hugVel = 0;*/
 
+		/*
+		* Drive code
+		*/
 		LDriveVel = LY;
 		RDriveVel = RY;
 
-		if (abs(LY) < 10) LY = 0;
-		if (abs(RY) < 10) RY = 0;
+		if (abs(LY) < 15) LY = 0;
+		if (abs(RY) < 15) RY = 0;
 
 		updateMotors();
+		wasClimbing = climbing;
 	}
 }
