@@ -183,8 +183,8 @@ task usercontrol() {
 			if (armVel < -31) armVel = 31 * (armVel/127) * (-armVel/127);
 		}
 
-		if (armTargetAngle == 925 && armError < 50) armVel = 0;
-		if (abs(armVel) < 25) armVel = 0;
+		if (armTargetAngle == 925 && armError < 50) armVel = 20;
+		if (abs(armVel) < 20) armVel = 0;
 
 		/*if (LBUp)			armVel = 127;
 		else if (LBDown)	armVel = -31;
