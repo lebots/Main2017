@@ -21,46 +21,14 @@
 //Main competition background code...do not modify!
 #include "Vex_Competition_Includes.c"
 
+#include "C:/Users/Cameron/Documents/LebotsCode/Main2017/joysticks.h"
+
 #define HUG_CLOSED 	3550
 #define HUG_OPEN	900
-#define HUG_MIDDLE 	1900
+#define HUG_MIDDLE 	2050
 #define ARM_UP		950
-#define ARM_CLIMB	1250
-#define ARM_DOWN	2770
-
-int LY = 0; // Left Y-axis Joystick
-int LX = 0; // Left X-axis Joystick
-int RY = 0; // Right Y-axis Joystick
-int RX = 0; // Right X-axis Joystick
-int LUp		= false; // Left D-Pad Up Button
-int LDown 	= false; // Left D-Pad Down Button
-int LLeft 	= false; // Left D-Pad Left Button
-int LRight 	= false; // Left D-Pad Right Button
-int LBUp	= false; // Left Top Bumper
-int LBDown 	= false; // Left Bottom Bumper
-int RUp		= false; // Right D-Pad Up Button
-int RDown 	= false; // Right D-Pad Down Button
-int RLeft 	= false; // Right D-Pad Left Button
-int RRight 	= false; // Right D-Pad Right Button
-int RBUp	= false; // Right Top Bumper
-int RBDown 	= false; // Right Bottom Bumper
-
-int LY_s = 0; // Left Y-axis Joystick on the secondary controller
-int LX_s = 0; // Left X-axis Joystick on the secondary controller
-int RY_s = 0; // Right Y-axis Joystick on the secondary controller
-int RX_s = 0; // Right X-axis Joystick on the secondary controller
-int LUp_s		= false; // Left D-Pad Up Button on the secondary controller
-int LDown_s 	= false; // Left D-Pad Down Button on the secondary controller
-int LLeft_s 	= false; // Left D-Pad Left Button on the secondary controller
-int LRight_s 	= false; // Left D-Pad Right Button on the secondary controller
-int LBUp_s		= false; // Left Top Bumper on the secondary controller
-int LBDown_s 	= false; // Left Bottom Bumper on the secondary controller
-int RUp_s		= false; // Right D-Pad Up Button on the secondary controller
-int RDown_s 	= false; // Right D-Pad Down Button on the secondary controller
-int RLeft_s 	= false; // Right D-Pad Left Button on the secondary controller
-int RRight_s 	= false; // Right D-Pad Right Button on the secondary controller
-int RBUp_s		= false; // Right Top Bumper on the secondary controller
-int RBDown_s 	= false; // Right Bottom Bumper on the secondary controller
+#define ARM_CLIMB	1150
+#define ARM_DOWN	2800
 
 int LDriveVel = 0; // Velocity of left drive
 int RDriveVel = 0; // Velocity of right drive
@@ -75,55 +43,24 @@ int hugError 		= 0; // Hug angle error for PID
 int hugIntegral 	= 0; // Hug integral for PID
 int hugDeriv 		= 0; // Hug deriv for PID
 int hugPrevError 	= 0; // Hug prev error for PID
+float kHugP = 0.1;
+float kHugI = 0.0;
+float kHugD = 1.0;
 
 int armTargetAngle	= 2700; // Target angle of arm
 int armError 		= 0; // Arm angle error for PID
 int armIntegral 	= 0; // Arm integral for PID
 int armDeriv 		= 0; // Arm deriv for PID
 int armPrevError 	= 0; // Arm prev error for PID
+float kArmP = 0.9;
+float kArmI = 0.0;
+float kArmD = 0.0;
 
 bool climbing = false;
 bool wasClimbing = false;
 bool armLocked = false;
 
 string autonMode = "preload";
-
-void updateJoysticks() {
-
-	LY = vexRT[Ch3];
-	LX = vexRT[Ch4];
-	RY = vexRT[Ch2];
-	RX = vexRT[Ch1];
-	LUp		= vexRT[Btn7U];
-	LDown   = vexRT[Btn7D];
-	LLeft   = vexRT[Btn7L];
-	LRight  = vexRT[Btn7R];
-	LBUp	= vexRT[Btn5U];
-	LBDown  = vexRT[Btn5D];
-	RUp		= vexRT[Btn8U];
-	RDown   = vexRT[Btn8D];
-	RLeft   = vexRT[Btn8L];
-	RRight  = vexRT[Btn8R];
-	RBUp	= vexRT[Btn6U];
-	RBDown  = vexRT[Btn6D];
-
-	LY_s  		= vexRT[Ch3Xmtr2];
-	LX_s 		= vexRT[Ch4Xmtr2];
-	RY_s 		= vexRT[Ch2Xmtr2];
-	RX_s 		= vexRT[Ch1Xmtr2];
-	LUp_s 		= vexRT[Btn7UXmtr2];
-	LDown_s 	= vexRT[Btn7DXmtr2];
-	LLeft_s 	= vexRT[Btn7LXmtr2];
-	LRight_s 	= vexRT[Btn7RXmtr2];
-	LBUp_s 		= vexRT[Btn5UXmtr2];
-	LBDown_s 	= vexRT[Btn5DXmtr2];
-	RUp_s 		= vexRT[Btn8UXmtr2];
-	RDown_s 	= vexRT[Btn8DXmtr2];
-	RLeft_s 	= vexRT[Btn8LXmtr2];
-	RRight_s 	= vexRT[Btn8RXmtr2];
-	RBUp_s 		= vexRT[Btn6UXmtr2];
-	RBDown_s 	= vexRT[Btn6DXmtr2];
-}
 
 void updateMotors() {
 
@@ -178,7 +115,7 @@ task armPID() {
 		armError = -(armTargetAngle - armAngle);
 		armIntegral += armError;
 		armDeriv = armPrevError - armError;
-		armVel = (0.9 * armError) + (0.0 * armIntegral) + (0.0 * armDeriv);
+		armVel = (kArmP * armError) + (kArmI * armIntegral) + (kArmD * armDeriv);
 		armPrevError = armError;
 		if (armVel < -31) armVel = 31 * (armVel/127) * (-armVel/127);
 
@@ -232,7 +169,7 @@ task usercontrol() {
 		/*
 		* Arm Code :/
 		*/
-		climbing = (bool)LDown;
+		//climbing = (bool)LDown;
 		if (LDown) {
 			armVel = -127;
 			climbing = true;
@@ -240,30 +177,29 @@ task usercontrol() {
 			climbing = false;
 		}
 
-		if (LUp)	armTargetAngle = ARM_UP;
+		if (LBUp)	armTargetAngle = ARM_UP;
 		if (LRight)	armTargetAngle = ARM_CLIMB;
-		if (LLeft)	armTargetAngle = ARM_DOWN;
+		if (LBDown)	armTargetAngle = ARM_DOWN;
 
 		if (!climbing && wasClimbing) {
 			armTargetAngle = armAngle;
 		}
 
-		if (!climbing) {
-			armError = -(armTargetAngle - armAngle);
+		if (!climbing && !(hugTargetAngle < 850 && armTargetAngle < 1100)) {
+			armError = armAngle - armTargetAngle;
 			armIntegral += armError;
 			armDeriv = armPrevError - armError;
-			armVel = (0.9 * armError) + (0.0 * armIntegral) + (0.0 * armDeriv);
+			armVel = (kArmP * armError) + (kArmI * armIntegral) + (kArmD * armDeriv);
 			armPrevError = armError;
 			if (armVel < -31) armVel = 31 * (armVel/127) * (-armVel/127);
+		} else if (hugTargetAngle <= 850) {
+			armVel = 0;
 		}
 
-		if (armTargetAngle == ARM_UP && armError < 50) armVel = 20;
+		if (armTargetAngle == ARM_UP && armError < 50 && hugTargetAngle > 850) armVel = 20;
 		if (abs(armVel) < 20) armVel = 0;
 
-		/*if (LBUp)			armVel = 127;
-		else if (LBDown)	armVel = -31;
-		else if (LDown)		armVel = -127;
-		else				armVel = 0;*/
+		wasClimbing = climbing;
 
 
 		/*
@@ -273,35 +209,16 @@ task usercontrol() {
 		if (RDown)			hugTargetAngle = HUG_OPEN;
 		if (RRight)			hugTargetAngle = HUG_MIDDLE;
 
-		/*if (RBUp)			hugVel = 50;
-		else if (RBDown)	hugVel = -50;
-		else				hugVel = 0;*/
-
 		if (!climbing) {
 			hugError = hugAngle - hugTargetAngle;
 			hugIntegral += hugError;
 			hugDeriv = hugPrevError - hugError;
-			hugVel = (0.5 * hugError) + (0.0 * hugIntegral) + (1.0 * hugDeriv);
+			hugVel = (0.5 * hugError) + (kHugI * hugIntegral) + (kHugD * hugDeriv);
 			hugPrevError = hugError;
 
 			if (hugVel > 75)	hugVel = 75;
 			if (hugVel < -75)	hugVel = -75;
 			if (abs(hugVel) < 20) hugVel = 0;
-		}
-
-
-		/*
-		* Drive code
-		*/
-		LDriveVel = LY;
-		RDriveVel = RY;
-
-		if (abs(LY) < 15) LDriveVel = 0;
-		if (abs(RY) < 15) RDriveVel = 0;
-
-		if (LDown) {
-			LDriveVel = 127;
-			RDriveVel = 127;
 		}
 
 		if (RLeft){
@@ -312,7 +229,21 @@ task usercontrol() {
 			armLocked = false;
 		}
 
+
+		/*
+		* Drive code
+		*/
+		LDriveVel = LY;
+		RDriveVel = RY;
+
+		if (LDown) {
+			LDriveVel = 127;
+			RDriveVel = 127;
+		}
+
+		if (abs(LDriveVel) < 15) LDriveVel = 0;
+		if (abs(RDriveVel) < 15) RDriveVel = 0;
+
 		updateMotors();
-		wasClimbing = climbing;
 	}
 }

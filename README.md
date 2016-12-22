@@ -5,13 +5,9 @@ Main Robot code for Vex Starstruck
 | Var Name | Port # |
 | -------- | ------ |
 | LHug     | 1      |
-| L1Arm    | 2      |
-| L2Arm    | 3      |
-| L3Arm    | 4      |
+| LArm     | 2-4    |
 | LDrive   | 5      |
-| R1Arm    | 6      |
-| R2Arm    | 7      |
-| R3Arm    | 8      |
+| RArm     | 6-8    |
 | RDrive   | 9      |
 | RHug     | 10     |
 
