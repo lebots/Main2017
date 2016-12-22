@@ -21,6 +21,13 @@
 //Main competition background code...do not modify!
 #include "Vex_Competition_Includes.c"
 
+#define HUG_CLOSED 	3550
+#define HUG_OPEN	900
+#define HUG_MIDDLE 	1900
+#define ARM_UP		950
+#define ARM_CLIMB	1250
+#define ARM_DOWN	2770
+
 int LY = 0; // Left Y-axis Joystick
 int LX = 0; // Left X-axis Joystick
 int RY = 0; // Right Y-axis Joystick
@@ -77,6 +84,9 @@ int armPrevError 	= 0; // Arm prev error for PID
 
 bool climbing = false;
 bool wasClimbing = false;
+bool armLocked = false;
+
+string autonMode = "preload";
 
 void updateJoysticks() {
 
@@ -125,8 +135,10 @@ void updateMotors() {
 
 	motor[L1Arm] = armVel;
 	motor[L2Arm] = armVel;
+	motor[L3Arm] = armVel;
 	motor[R1Arm] = armVel;
 	motor[R2Arm] = armVel;
+	motor[R3Arm] = armVel;
 }
 
 void updateSensors() {
@@ -138,13 +150,75 @@ void pre_auton() {
   bStopTasksBetweenModes = true;
   updateSensors();
 
+
   armTargetAngle = armAngle;
   hugTargetAngle = hugAngle;
 }
 
+task huggerPID() {
+	while (true) {
+		updateSensors();
+		hugError = hugAngle - hugTargetAngle;
+		hugIntegral += hugError;
+		hugDeriv = hugPrevError - hugError;
+		hugVel = (0.1 * hugError) + (0.0 * hugIntegral) + (1.0 * hugDeriv);
+		hugPrevError = hugError;
+
+		if (hugVel > 100)	hugVel = 100;
+		if (hugVel < -100)	hugVel = -100;
+		if (abs(hugVel) < 15) hugVel = 0;
+		motor[RHug] = hugVel;
+		motor[LHug] = hugVel;
+	}
+}
+
+task armPID() {
+	while (true) {
+		updateSensors();
+		armError = -(armTargetAngle - armAngle);
+		armIntegral += armError;
+		armDeriv = armPrevError - armError;
+		armVel = (0.9 * armError) + (0.0 * armIntegral) + (0.0 * armDeriv);
+		armPrevError = armError;
+		if (armVel < -31) armVel = 31 * (armVel/127) * (-armVel/127);
+
+		if (armTargetAngle == 925 && armError < 50) armVel = 20;
+		if (abs(armVel) < 20) armVel = 0;
+
+		motor[L1Arm] = armVel;
+		motor[L2Arm] = armVel;
+		motor[L3Arm] = armVel;
+		motor[R1Arm] = armVel;
+		motor[R2Arm] = armVel;
+		motor[R3Arm] = armVel;
+	}
+}
+
+task preloadAuto() {
+	hugTargetAngle = HUG_CLOSED;
+	armTargetAngle = ARM_DOWN;
+	startTask(huggerPID);
+	startTask(armPID);
+	waitUntil(abs(SensorValue[hugAngleSensor] - hugTargetAngle) < 50);
+	armTargetAngle = ARM_UP;
+	waitUntil(abs(SensorValue[armAngleSensor] - armTargetAngle) < 30);
+	motor[LDrive] = 63;
+	motor[RDrive] = 63;
+	wait1Msec(500);
+	motor[LDrive] = 127;
+	motor[RDrive] = 127;
+	wait1Msec(2500);
+	motor[LDrive] = 0;
+	motor[RDrive] = 0;
+	wait1Msec(500);
+	hugTargetAngle = HUG_MIDDLE;
+}
 
 task autonomous() {
-
+	updateSensors();
+	if (autonMode == "preload") {
+		startTask(preloadAuto);
+	}
 }
 
 
@@ -166,9 +240,9 @@ task usercontrol() {
 			climbing = false;
 		}
 
-		if (LUp)	armTargetAngle = 925;
-		if (LRight)	armTargetAngle = 1250;
-		if (LLeft)	armTargetAngle = 2770;
+		if (LUp)	armTargetAngle = ARM_UP;
+		if (LRight)	armTargetAngle = ARM_CLIMB;
+		if (LLeft)	armTargetAngle = ARM_DOWN;
 
 		if (!climbing && wasClimbing) {
 			armTargetAngle = armAngle;
@@ -183,7 +257,7 @@ task usercontrol() {
 			if (armVel < -31) armVel = 31 * (armVel/127) * (-armVel/127);
 		}
 
-		if (armTargetAngle == 925 && armError < 50) armVel = 20;
+		if (armTargetAngle == ARM_UP && armError < 50) armVel = 20;
 		if (abs(armVel) < 20) armVel = 0;
 
 		/*if (LBUp)			armVel = 127;
@@ -195,23 +269,25 @@ task usercontrol() {
 		/*
 		* Hug code :)
 		*/
-		if (RUp)			hugTargetAngle = 2700;
-		if (RDown)			hugTargetAngle = 300;
-		if (RRight)			hugTargetAngle = 1300;
+		if (RUp)			hugTargetAngle = HUG_CLOSED;
+		if (RDown)			hugTargetAngle = HUG_OPEN;
+		if (RRight)			hugTargetAngle = HUG_MIDDLE;
 
 		/*if (RBUp)			hugVel = 50;
 		else if (RBDown)	hugVel = -50;
 		else				hugVel = 0;*/
 
-		hugError = hugAngle - hugTargetAngle;
-		hugIntegral += hugError;
-		hugDeriv = hugPrevError - hugError;
-		hugVel = (0.1 * hugError) + (0.0 * hugIntegral) + (1.0 * hugDeriv);
-		hugPrevError = hugError;
+		if (!climbing) {
+			hugError = hugAngle - hugTargetAngle;
+			hugIntegral += hugError;
+			hugDeriv = hugPrevError - hugError;
+			hugVel = (0.5 * hugError) + (0.0 * hugIntegral) + (1.0 * hugDeriv);
+			hugPrevError = hugError;
 
-		if (hugVel > 50)	hugVel = 50;
-		if (hugVel < -50)	hugVel = -50;
-		if (abs(hugVel) < 15) hugVel = 0;
+			if (hugVel > 75)	hugVel = 75;
+			if (hugVel < -75)	hugVel = -75;
+			if (abs(hugVel) < 20) hugVel = 0;
+		}
 
 
 		/*
@@ -220,8 +296,21 @@ task usercontrol() {
 		LDriveVel = LY;
 		RDriveVel = RY;
 
-		if (abs(LY) < 15) LY = 0;
-		if (abs(RY) < 15) RY = 0;
+		if (abs(LY) < 15) LDriveVel = 0;
+		if (abs(RY) < 15) RDriveVel = 0;
+
+		if (LDown) {
+			LDriveVel = 127;
+			RDriveVel = 127;
+		}
+
+		if (RLeft){
+			hugVel = 100;
+			armLocked = true;
+		} else if (!RLeft && armLocked) {
+			hugTargetAngle = hugAngle;
+			armLocked = false;
+		}
 
 		updateMotors();
 		wasClimbing = climbing;
