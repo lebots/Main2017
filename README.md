@@ -1,6 +1,20 @@
 ## Main2017
 Main Robot code for Vex Starstruck
 
+### Controls
+| Action            | Axis/Button |
+| ----------------- | ----------- |
+| Left Drive        | ***Left*** Y Axis |
+| Right Drive       | ***Right*** Y Axis |
+| Arm to Top        | Top ***Left*** Bumper |
+| Arm to Bottom     | Bottom ***Left*** Bumper |
+| Climb Prep        | Right on ***Left*** D-Pad |
+| Climb             | Down on ***Left*** D-Pad |
+| Close Hugger      | Up on ***Right*** D-Pad |
+| Open Hugger       | Down on ***Right*** D-Pad |
+| Half-Open Hugger  | Right on ***Right*** D-Pad |
+| Lock Hugger       | Left on ***Right*** D-Pad |
+
 ### Motor ports
 | Var Name | Port # |
 | -------- | ------ |
