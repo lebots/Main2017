@@ -2,18 +2,23 @@
 Main Robot code for Vex Starstruck
 
 ### Controls
-| Action            | Axis/Button |
-| ----------------- | ----------- |
-| Left Drive        | ***Left*** Y Axis |
-| Right Drive       | ***Right*** Y Axis |
-| Arm to Top        | Top ***Left*** Bumper |
-| Arm to Bottom     | Bottom ***Left*** Bumper |
-| Climb Prep        | Right on ***Left*** D-Pad |
-| Climb             | Down on ***Left*** D-Pad |
-| Close Hugger      | Up on ***Right*** D-Pad |
-| Open Hugger       | Down on ***Right*** D-Pad |
-| Half-Open Hugger  | Right on ***Right*** D-Pad |
-| Lock Hugger       | Left on ***Right*** D-Pad |
+| Action            | L/R   | Axis/Button |
+| ----------------- | ----- | ----------- |
+| Left Drive        | **L** | Y Axis |
+| Right Drive       | _R_   | Y Axis |
+| Arm to Top        | **L** | Top Bumper |
+| Arm to Bottom     | **L** | Bottom Bumper |
+| Arm to Climb Prep | **L** | Up on D-Pad |
+| Climb             | **L** | Left on D-Pad |
+| Tune Arm Up       | **L** | Right on D-Pad |
+| Tune Arm Down     | **L** | Down on D-Pad |
+| Close Hugger      | _R_   | Top Bumper |
+| ~90° Hugger       | _R_   | Bottom Bumper |
+| ~180° Hugger      | _R_   | Right on D-Pad |
+| Lock Hugger       | _R_   | Up on D-Pad |
+| Tune Hugger Open  | _R_   | Left on D-Pad |
+| Tune Hugger Close | _R_   | Down on D-Pad |
+
 
 ### Motor ports
 | Var Name | Port # |
