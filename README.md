@@ -1,23 +1,23 @@
-## Main2017
+﻿## Main2017
 Main Robot code for Vex Starstruck
 
 ### Controls
-| Action            | L/R   | Axis/Button |
-| ----------------- | ----- | ----------- |
-| Left Drive        | **L** | Y Axis |
-| Right Drive       | _R_   | Y Axis |
-| Arm to Top        | **L** | Top Bumper |
-| Arm to Bottom     | **L** | Bottom Bumper |
-| Arm to Climb Prep | **L** | Up on D-Pad |
-| Climb             | **L** | Left on D-Pad |
-| Tune Arm Up       | **L** | Right on D-Pad |
-| Tune Arm Down     | **L** | Down on D-Pad |
-| Close Hugger      | _R_   | Top Bumper |
-| ~90° Hugger       | _R_   | Bottom Bumper |
-| ~180° Hugger      | _R_   | Right on D-Pad |
-| Lock Hugger       | _R_   | Up on D-Pad |
-| Tune Hugger Open  | _R_   | Left on D-Pad |
-| Tune Hugger Close | _R_   | Down on D-Pad |
+| Mech.  | Desc.      | L/R   | Axis/Button    | Action |
+| ------ | ---------- | ----- | -------------- | ------ |
+| Drive  | Left       | **L** | Y Axis         | Move   |
+| Drive  | Right      | _R_   | Y Axis         | Move   |
+| Arm    | Top        | **L** | Top Bumper     | Press  |
+| Arm    | Bottom     | **L** | Bottom Bumper  | Press  |
+| Arm    | Climb Prep | **L** | Up on D-Pad    | Press  |
+| Arm    | Climb      | **L** | Left on D-Pad  | Hold   |
+| Arm    | Tune Up    | **L** | Right on D-Pad | Hold   |
+| Arm    | Tune Down  | **L** | Down on D-Pad  | Hold   |
+| Hugger | Close      | _R_   | Top Bumper     | Hold   |
+| Hugger | 90°        | _R_   | Bottom Bumper  | Press  |
+| Hugger | 180°       | _R_   | Right on D-Pad | Press  |
+| Hugger | Lock       | _R_   | Up on D-Pad    | Hold   |
+| Hugger | Tune Open  | _R_   | Left on D-Pad  | Hold   |
+| Hugger | Tune Close | _R_   | Down on D-Pad  | Hold   |
 
 
 ### Motor ports
@@ -31,7 +31,9 @@ Main Robot code for Vex Starstruck
 | RHug     | 10     |
 
 ### Sensor ports
-| Var Name       | Type | Port # |
-| -------------- | ---- | ------ |
-| armAngleSensor | Pot  | 1 |
-| hugAngleSensor | Pot  | 2 |
+| Var Name           | Type | Port # |
+| ------------------ | ---- | ------ |
+| armAngleSensor     | Pot  | 1 |
+| hugAngleSensor     | Pot  | 2 |
+| leftEncoderSensor  | Enc  | 1-2 |
+| rightEncoderSensor | Enc  | 3-4 |

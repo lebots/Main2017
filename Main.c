@@ -1,5 +1,7 @@
 #pragma config(Sensor, in1,    armAngleSensor, sensorPotentiometer)
 #pragma config(Sensor, in2,    hugAngleSensor, sensorPotentiometer)
+#pragma config(Sensor, dgtl1,  leftEncoderSensor, sensorQuadEncoder)
+#pragma config(Sensor, dgtl3,  rightEncoderSensor, sensorQuadEncoder)
 #pragma config(Motor,  port1,           LHug,          tmotorVex393_HBridge, openLoop)
 #pragma config(Motor,  port2,           L1Arm,         tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           L2Arm,         tmotorVex393_MC29, openLoop, reversed)
@@ -28,7 +30,7 @@
 #define HUG_MIDDLE 		2050
 #define HUG_CLIMBPREP	915
 #define ARM_UP			950
-#define ARM_CLIMB		1100
+#define ARM_CLIMB		1415
 #define ARM_DOWN		2800
 
 int LDriveVel = 0; // Velocity of left drive
@@ -56,6 +58,24 @@ int armPrevError 	= 0; // Arm prev error for PID
 float kArmP = 0.9;
 float kArmI = 0.0;
 float kArmD = 0.0;
+
+int leftDriveTargetAngle	= 0; // Encoder pos for left drive PID
+int leftDriveError 		= 0; // Left Drive positional error for PID
+int leftDriveIntegral 	= 0; // Left Drive integral for PID
+int leftDriveDeriv 		= 0; // Left Drive deriv for PID
+int leftDrivePrevError 	= 0; // Left Drive prev error for PID
+float kLeftDriveP = 0.9;
+float kLeftDriveI = 0.0;
+float kLeftDriveD = 0.0;
+
+int rightDriveTargetAngle	= 0; // Encoder pos for right drive PID
+int rightDriveError 		= 0; // Right Drive positional error for PID
+int rightDriveIntegral 		= 0; // Right Drive integral for PID
+int rightDriveDeriv 		= 0; // Right Drive deriv for PID
+int rightDrivePrevError 	= 0; // Right Drive prev error for PID
+float kRightDriveP = 0.9;
+float kRightDriveI = 0.0;
+float kRightDriveD = 0.0;
 
 bool climbing = false;
 bool wasClimbing = false;
@@ -129,6 +149,22 @@ task armPID() {
 		motor[R1Arm] = armVel;
 		motor[R2Arm] = armVel;
 		motor[R3Arm] = armVel;
+	}
+}
+
+task drivePostitionPID() {
+	while (true) {
+		leftDriveError = SensorValue[leftEncoderSensor]- leftDriveTargetAngle;
+		leftDriveIntegral += leftDriveError;
+		leftDriveDeriv = leftDrivePrevError - leftDriveError;
+		LDriveVel = (0.1 * leftDriveError) + (0.0 * leftDriveIntegral) + (1.0 * leftDriveDeriv);
+		leftDrivePrevError = leftDriveError;
+
+		leftDriveError = SensorValue[leftEncoderSensor]- leftDriveTargetAngle;
+		leftDriveIntegral += leftDriveError;
+		leftDriveDeriv = leftDrivePrevError - leftDriveError;
+		LDriveVel = (0.1 * leftDriveError) + (0.0 * leftDriveIntegral) + (1.0 * leftDriveDeriv);
+		leftDrivePrevError = leftDriveError;
 	}
 }
 
