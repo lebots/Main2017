@@ -1,7 +1,7 @@
 #pragma config(Sensor, in1,    armAngleSensor, sensorPotentiometer)
 #pragma config(Sensor, in2,    hugAngleSensor, sensorPotentiometer)
-#pragma config(Sensor, dgtl1,  leftEncoderSensor, sensorQuadEncoder)
-#pragma config(Sensor, dgtl3,  rightEncoderSensor, sensorQuadEncoder)
+#pragma config(Sensor, dgtl1,  rightEncoderSensor, sensorQuadEncoder)
+#pragma config(Sensor, dgtl3,  leftEncoderSensor, sensorQuadEncoder)
 #pragma config(Motor,  port1,           LHug,          tmotorVex393_HBridge, openLoop)
 #pragma config(Motor,  port2,           L1Arm,         tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           L2Arm,         tmotorVex393_MC29, openLoop, reversed)
@@ -25,13 +25,15 @@
 
 #include "C:/Users/Cameron/Documents/LebotsCode/Main2017/joysticks.h"
 
-#define HUG_CLOSED 		3550
+#define HUG_CLOSED 		3400
 #define HUG_OPEN		900
 #define HUG_MIDDLE 		2050
 #define HUG_CLIMBPREP	915
 #define ARM_UP			950
 #define ARM_CLIMB		1415
 #define ARM_DOWN		2800
+
+#define TILE_LENGTH_FOR_DRIVE	660
 
 int LDriveVel = 0; // Velocity of left drive
 int RDriveVel = 0; // Velocity of right drive
@@ -46,7 +48,7 @@ int hugError 		= 0; // Hug angle error for PID
 int hugIntegral 	= 0; // Hug integral for PID
 int hugDeriv 		= 0; // Hug deriv for PID
 int hugPrevError 	= 0; // Hug prev error for PID
-float kHugP = 0.1;
+float kHugP = 0.5;
 float kHugI = 0.0;
 float kHugD = 1.0;
 
@@ -64,18 +66,20 @@ int leftDriveError 		= 0; // Left Drive positional error for PID
 int leftDriveIntegral 	= 0; // Left Drive integral for PID
 int leftDriveDeriv 		= 0; // Left Drive deriv for PID
 int leftDrivePrevError 	= 0; // Left Drive prev error for PID
-float kLeftDriveP = 0.9;
+float kLeftDriveP = 0.5;
 float kLeftDriveI = 0.0;
-float kLeftDriveD = 0.0;
+float kLeftDriveD = 2.0;
 
 int rightDriveTargetAngle	= 0; // Encoder pos for right drive PID
 int rightDriveError 		= 0; // Right Drive positional error for PID
 int rightDriveIntegral 		= 0; // Right Drive integral for PID
 int rightDriveDeriv 		= 0; // Right Drive deriv for PID
 int rightDrivePrevError 	= 0; // Right Drive prev error for PID
-float kRightDriveP = 0.9;
+float kRightDriveP = 0.5;
 float kRightDriveI = 0.0;
-float kRightDriveD = 0.0;
+float kRightDriveD = 2.0;
+
+float drivePIDMultiplier = 1.0;
 
 int armLockVel = 0; // Velocity of locking motor for ratchet after climb
 
@@ -83,7 +87,7 @@ bool climbing = false;
 bool wasClimbing = false;
 bool armLocked = false;
 
-string autonMode = "preload";
+string autonMode = "preloadStraight";
 
 void updateMotors() {
 
@@ -111,6 +115,8 @@ void updateSensors() {
 void pre_auton() {
   bStopTasksBetweenModes = true;
   updateSensors();
+  SensorValue[leftEncoderSensor] = 0;
+  SensorValue[rightEncoderSensor] = 0;
 
 
   armTargetAngle = armAngle;
@@ -123,7 +129,7 @@ task huggerPID() {
 		hugError = hugAngle - hugTargetAngle;
 		hugIntegral += hugError;
 		hugDeriv = hugPrevError - hugError;
-		hugVel = (0.1 * hugError) + (0.0 * hugIntegral) + (1.0 * hugDeriv);
+		hugVel = (kHugP * hugError) + (0.0 * hugIntegral) + (1.0 * hugDeriv);
 		hugPrevError = hugError;
 
 		if (hugVel > 100)	hugVel = 100;
@@ -158,44 +164,66 @@ task armPID() {
 
 task drivePostitionPID() {
 	while (true) {
-		leftDriveError = SensorValue[leftEncoderSensor]- leftDriveTargetAngle;
+		leftDriveError = leftDriveTargetAngle - SensorValue[leftEncoderSensor];
 		leftDriveIntegral += leftDriveError;
 		leftDriveDeriv = leftDrivePrevError - leftDriveError;
-		LDriveVel = (0.1 * leftDriveError) + (0.0 * leftDriveIntegral) + (1.0 * leftDriveDeriv);
+		LDriveVel = (kLeftDriveP * leftDriveError) + (kLeftDriveI * leftDriveIntegral) + (kLeftDriveD * leftDriveDeriv);
 		leftDrivePrevError = leftDriveError;
 
-		leftDriveError = SensorValue[leftEncoderSensor]- leftDriveTargetAngle;
-		leftDriveIntegral += leftDriveError;
-		leftDriveDeriv = leftDrivePrevError - leftDriveError;
-		LDriveVel = (0.1 * leftDriveError) + (0.0 * leftDriveIntegral) + (1.0 * leftDriveDeriv);
-		leftDrivePrevError = leftDriveError;
+		rightDriveError = SensorValue[rightEncoderSensor] - rightDriveTargetAngle;
+		rightDriveIntegral += rightDriveError;
+		rightDriveDeriv = rightDrivePrevError - rightDriveError;
+		RDriveVel = (kRightDriveP * rightDriveError) + (kRightDriveI * rightDriveIntegral) + (kRightDriveD * rightDriveDeriv);
+		rightDrivePrevError = rightDriveError;
+
+		if (LDriveVel > 127) LDriveVel = 127;
+		else if (LDriveVel < -127) LDriveVel = -127;
+		if (RDriveVel > 127) RDriveVel = 127;
+		else if (RDriveVel < -127) RDriveVel = -127;
+
+		motor[LDrive] = LDriveVel * drivePIDMultiplier;
+		motor[RDrive] = RDriveVel * drivePIDMultiplier;
 	}
 }
 
-task preloadAuto() {
+task preloadStraightAuto() {
 	hugTargetAngle = HUG_CLOSED;
 	armTargetAngle = ARM_DOWN;
+	leftDriveTargetAngle = 0;
+	rightDriveTargetAngle = 0;
+	drivePIDMultiplier = 0.3;
 	startTask(huggerPID);
 	startTask(armPID);
+	startTask(drivePostitionPID);
 	waitUntil(abs(SensorValue[hugAngleSensor] - hugTargetAngle) < 50);
 	armTargetAngle = ARM_UP;
+	leftDriveTargetAngle = 1550;
+	rightDriveTargetAngle = -1550;
 	waitUntil(abs(SensorValue[armAngleSensor] - armTargetAngle) < 30);
-	motor[LDrive] = 63;
-	motor[RDrive] = 63;
 	wait1Msec(500);
-	motor[LDrive] = 127;
-	motor[RDrive] = 127;
-	wait1Msec(2500);
-	motor[LDrive] = 0;
-	motor[RDrive] = 0;
-	wait1Msec(500);
+	drivePIDMultiplier = 1.0;
+	waitUntil(abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 30);
 	hugTargetAngle = HUG_MIDDLE;
+	waitUntil(abs(SensorValue[hugAngleSensor] - hugTargetAngle) < 50);
+	wait1Msec(500);
+	SensorValue[leftEncoderSensor] = 0;
+	SensorValue[rightEncoderSensor] = 0;
+	leftDriveTargetAngle = -500;
+	rightDriveTargetAngle = 500;
+	waitUntil(abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 30);
+	armTargetAngle += 250;
+	waitUntil(abs(SensorValue[armAngleSensor] - armTargetAngle) < 30);
+	SensorValue[leftEncoderSensor] = 0;
+	SensorValue[rightEncoderSensor] = 0;
+	leftDriveTargetAngle = 500;
+	rightDriveTargetAngle = -500;
 }
 
 task autonomous() {
+	pre_auton();
 	updateSensors();
-	if (autonMode == "preload") {
-		startTask(preloadAuto);
+	if (autonMode == "preloadStraight") {
+		startTask(preloadStraightAuto);
 	}
 }
 
@@ -256,7 +284,7 @@ task usercontrol() {
 			hugError = hugAngle - hugTargetAngle;
 			hugIntegral += hugError;
 			hugDeriv = hugPrevError - hugError;
-			hugVel = (0.5 * hugError) + (kHugI * hugIntegral) + (kHugD * hugDeriv);
+			hugVel = (kHugP * hugError) + (kHugI * hugIntegral) + (kHugD * hugDeriv);
 			hugPrevError = hugError;
 
 			/*if (hugVel > 50)	hugVel = 127;
@@ -277,8 +305,9 @@ task usercontrol() {
 			//hugVel = 100;
 			armLockVel = 50;
 			armLocked = true;
+		} else if (!RLeft && armLocked) {
+			hugTargetAngle = hugAngle;
 		} else {
-			//hugTargetAngle = hugAngle;
 			armLockVel = 0;
 			armLocked = false;
 		}

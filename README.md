@@ -12,10 +12,10 @@ Main Robot code for Vex Starstruck
 | Arm    | Climb      | **L** | Left on D-Pad  | Hold   |
 | Arm    | Tune Up    | **L** | Right on D-Pad | Hold   |
 | Arm    | Tune Down  | **L** | Down on D-Pad  | Hold   |
+| Arm    | Lock       | _R_   | Up on D-Pad    | Hold   |
 | Hugger | Close      | _R_   | Top Bumper     | Hold   |
 | Hugger | 90°        | _R_   | Bottom Bumper  | Press  |
 | Hugger | 180°       | _R_   | Right on D-Pad | Press  |
-| Hugger | Lock       | _R_   | Up on D-Pad    | Hold   |
 | Hugger | Tune Open  | _R_   | Left on D-Pad  | Hold   |
 | Hugger | Tune Close | _R_   | Down on D-Pad  | Hold   |
 
