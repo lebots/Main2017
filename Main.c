@@ -86,6 +86,8 @@ int armLockVel = 0; // Velocity of locking motor for ratchet after climb
 bool climbing = false;
 bool wasClimbing = false;
 bool armLocked = false;
+bool armFineTune = false;
+bool wasArmTuning = false;
 
 string autonMode = "preloadStraight";
 
@@ -246,15 +248,25 @@ task usercontrol() {
 			climbing = false;
 		}
 
+		if (LDown) {
+			armFineTune = true;
+			armVel = -25;
+		} else if (LRight) {
+			armFineTune = true;
+			armVel = 60;
+		} else {
+			armFineTune = false;
+		}
+
 		if (LBUp)	armTargetAngle = ARM_UP;
 		if (LUp)	armTargetAngle = ARM_CLIMB;
 		if (LBDown)	armTargetAngle = ARM_DOWN;
 
-		if (!climbing && wasClimbing) {
+		if ((!climbing && wasClimbing) || (!armFineTune && wasArmTuning)) {
 			armTargetAngle = armAngle;
 		}
 
-		if (!climbing && !(hugTargetAngle < 850 && armTargetAngle < 1100)) {
+		if (!climbing && !armFineTune && !(hugTargetAngle < 850 && armTargetAngle < 1100)) {
 			armError = armAngle - armTargetAngle;
 			armIntegral += armError;
 			armDeriv = armPrevError - armError;
@@ -269,6 +281,7 @@ task usercontrol() {
 		if (abs(armVel) < 20) armVel = 0;
 
 		wasClimbing = climbing;
+		wasArmTuning = armFineTune;
 
 
 		/*
@@ -290,7 +303,7 @@ task usercontrol() {
 			/*if (hugVel > 50)	hugVel = 127;
 			if (hugVel < -50)	hugVel = -127;*/
 			if (abs(hugVel) < 20) hugVel = 0;
-			if (hugTargetAngle == HUG_MIDDLE && hugAngle < HUG_MIDDLE) hugVel = -20;
+			//if (hugTargetAngle == HUG_MIDDLE && hugAngle < HUG_MIDDLE) hugVel = -20;
 		}
 
 		if (RBUp){
@@ -305,6 +318,8 @@ task usercontrol() {
 			//hugVel = 100;
 			armLockVel = 50;
 			armLocked = true;
+		} else if (RDown) {
+			armLockVel = -50;
 		} else if (!RLeft && armLocked) {
 			hugTargetAngle = hugAngle;
 		} else {
