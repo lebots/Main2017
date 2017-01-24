@@ -1,5 +1,6 @@
 #pragma config(Sensor, in1,    armAngleSensor, sensorPotentiometer)
 #pragma config(Sensor, in2,    hugAngleSensor, sensorPotentiometer)
+#pragma config(Sensor, in3,    ratchetAngleSensor, sensorPotentiometer)
 #pragma config(Sensor, dgtl1,  rightEncoderSensor, sensorQuadEncoder)
 #pragma config(Sensor, dgtl3,  leftEncoderSensor, sensorQuadEncoder)
 #pragma config(Motor,  port1,           LHug,          tmotorVex393_HBridge, openLoop)
@@ -30,8 +31,12 @@
 #define HUG_MIDDLE 		2050
 #define HUG_CLIMBPREP	915
 #define ARM_UP			950
-#define ARM_CLIMB		1415
+#define ARM_CLIMB		1400
 #define ARM_DOWN		2800
+#define ARM_HIGH_FENCE	1200
+#define ARM_LOW_FENCE	1405
+#define RATCHET_LOCKED	1100
+#define RATCHET_DB		600
 
 #define TILE_LENGTH_FOR_DRIVE	660
 
@@ -42,6 +47,7 @@ int armVel = 0; // Velocity of arm
 
 int armAngle = 0; // Angle of the arm
 int hugAngle = 0; // Angle of the hug
+int ratchetAngle = 0; // Angle of ratchet
 
 int hugTargetAngle	= 1300; // Target angle of hugger
 int hugError 		= 0; // Hug angle error for PID
@@ -112,17 +118,28 @@ void updateMotors() {
 void updateSensors() {
 	armAngle = SensorValue[armAngleSensor];
 	hugAngle = SensorValue[hugAngleSensor];
+	ratchetAngle = SensorValue[ratchetAngleSensor];
+}
+
+task unlockRatchet() {
+	while (abs(SensorValue[ratchetAngleSensor] - RATCHET_LOCKED) <= RATCHET_DB) {
+		motor[armLock] = -50;
+	}
+	motor[armLock] = 0;
 }
 
 void pre_auton() {
-  bStopTasksBetweenModes = true;
-  updateSensors();
-  SensorValue[leftEncoderSensor] = 0;
-  SensorValue[rightEncoderSensor] = 0;
+	bStopTasksBetweenModes = true;
+	updateSensors();
+	resetTimer();
+	SensorValue[leftEncoderSensor] = 0;
+	SensorValue[rightEncoderSensor] = 0;
+
+	startTask(unlockRatchet);
 
 
-  armTargetAngle = armAngle;
-  hugTargetAngle = hugAngle;
+	armTargetAngle = armAngle;
+	hugTargetAngle = hugAngle;
 }
 
 task huggerPID() {
@@ -231,6 +248,7 @@ task autonomous() {
 
 
 task usercontrol() {
+	pre_auton();
 	while (true) {
 
 		updateJoysticks();
@@ -240,7 +258,6 @@ task usercontrol() {
 		/*
 		* Arm Code :/
 		*/
-		//climbing = (bool)LDown;
 		if (LLeft) {
 			armVel = -127;
 			climbing = true;
@@ -248,19 +265,23 @@ task usercontrol() {
 			climbing = false;
 		}
 
-		if (LDown) {
-			armFineTune = true;
-			armVel = -25;
-		} else if (LRight) {
-			armFineTune = true;
-			armVel = 60;
-		} else {
-			armFineTune = false;
+		if (LBUp)	armTargetAngle = ARM_UP;
+		if (LBDown)	armTargetAngle = ARM_DOWN;
+
+		if (LUp) {
+			armTargetAngle = ARM_CLIMB
+			hugTargetAngle = HUG_CLIMBPREP;
 		}
 
-		if (LBUp)	armTargetAngle = ARM_UP;
-		if (LUp)	armTargetAngle = ARM_CLIMB;
-		if (LBDown)	armTargetAngle = ARM_DOWN;
+		if (LDown) {
+			armTargetAngle = ARM_LOW_FENCE;
+			hugTargetAngle = HUG_MIDDLE;
+		}
+
+		if (RLeft) {
+			armTargetAngle = ARM_HIGH_FENCE;
+			hugTargetAngle = HUG_MIDDLE;
+		}
 
 		if ((!climbing && wasClimbing) || (!armFineTune && wasArmTuning)) {
 			armTargetAngle = armAngle;
@@ -287,11 +308,8 @@ task usercontrol() {
 		/*
 		* Hug code :)
 		*/
-		//if (RBUp)		hugTargetAngle = HUG_CLOSED;
-		if (RDown)		hugTargetAngle = HUG_OPEN;
 		if (RRight)		hugTargetAngle = HUG_MIDDLE;
 		if (RBDown)		hugTargetAngle = 2877;
-		if (LUp)		hugTargetAngle = HUG_CLIMBPREP;
 
 		if (!climbing) {
 			hugError = hugAngle - hugTargetAngle;
@@ -300,10 +318,7 @@ task usercontrol() {
 			hugVel = (kHugP * hugError) + (kHugI * hugIntegral) + (kHugD * hugDeriv);
 			hugPrevError = hugError;
 
-			/*if (hugVel > 50)	hugVel = 127;
-			if (hugVel < -50)	hugVel = -127;*/
 			if (abs(hugVel) < 20) hugVel = 0;
-			//if (hugTargetAngle == HUG_MIDDLE && hugAngle < HUG_MIDDLE) hugVel = -20;
 		}
 
 		if (RBUp){
@@ -314,17 +329,18 @@ task usercontrol() {
 			armLocked = false;
 		}
 
-		if (RUp){
-			//hugVel = 100;
-			armLockVel = 50;
-			armLocked = true;
-		} else if (RDown) {
-			armLockVel = -50;
-		} else if (!RLeft && armLocked) {
-			hugTargetAngle = hugAngle;
-		} else {
-			armLockVel = 0;
-			armLocked = false;
+		if (getTimer() >= 1) {
+			if (RUp){
+				armLockVel = 50;
+				armLocked = true;
+			} else if (RDown) {
+				armLockVel = -50;
+			} else if (!RLeft && armLocked) {
+				hugTargetAngle = hugAngle;
+			} else {
+				armLockVel = 0;
+				armLocked = false;
+			}
 		}
 
 
