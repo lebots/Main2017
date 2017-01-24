@@ -16,7 +16,6 @@ Main Robot code for Vex Starstruck
 | Hugger | Close      | _R_   | Top Bumper     | Hold   |
 | Hugger | 90°        | _R_   | Bottom Bumper  | Press  |
 | Hugger | 180°       | _R_   | Right on D-Pad | Press  |
-| Hugger | Tune Open  | _R_   | Left on D-Pad  | Hold   |
 
 ### Motor ports
 | Var Name | Port # |
