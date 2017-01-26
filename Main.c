@@ -28,7 +28,7 @@
 #include "./var.h"
 
 #define HUG_CLOSED 		3400
-#define HUG_OPEN		900
+#define HUG_OPEN		2877
 #define HUG_MIDDLE 		2050
 #define HUG_CLIMBPREP	915
 #define ARM_UP			950
@@ -40,7 +40,7 @@
 #define RATCHET_DB		600
 #define TILE_LENGTH_FOR_DRIVE	660
 
-string autonMode = "preloadStraight";
+string autonMode = "fastForward"; // preloadStraight, leftCube, rightCube, fastForward (rightCube has yet to be tested)
 
 void updateMotors() {
 
@@ -181,11 +181,112 @@ task preloadStraightAuto() {
 	rightDriveTargetAngle = -500;
 }
 
+task leftCubeAuto() {
+	hugTargetAngle = hugAngle;
+	armTargetAngle = ARM_DOWN;
+	leftDriveTargetAngle = 0;
+	rightDriveTargetAngle = 0;
+	drivePIDMultiplier = 1.0;
+	startTask(huggerPID);
+	startTask(armPID);
+	startTask(drivePostitionPID);
+	leftDriveTargetAngle = 750;
+	rightDriveTargetAngle = -750;
+	waitUntil(abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 275);
+	resetTimer();
+	hugTargetAngle = HUG_CLOSED;
+	waitUntil(abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 30);
+	waitUntil((abs(SensorValue[hugAngleSensor] - hugTargetAngle) < 350) || getTimer() > 3);
+	wait1Msec(250);
+	armTargetAngle = ARM_HIGH_FENCE - 100;
+	waitUntil(abs(SensorValue[armAngleSensor] - armTargetAngle) < 30);
+	wait1Msec(750);
+	SensorValue[leftEncoderSensor] = 0;
+	SensorValue[rightEncoderSensor] = 0;
+	leftDriveTargetAngle = -235;
+	rightDriveTargetAngle = -235;
+	waitUntil(abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 50);
+	wait1Msec(100);
+	resetTimer();
+	SensorValue[leftEncoderSensor] = 0;
+	SensorValue[rightEncoderSensor] = 0;
+	leftDriveTargetAngle = 950;
+	rightDriveTargetAngle = -950;
+	waitUntil((abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 30) || getTimer() > 5);
+	hugTargetAngle = HUG_MIDDLE;
+}
+
+task rightCubeAuto() {
+	hugTargetAngle = hugAngle;
+	armTargetAngle = ARM_DOWN;
+	leftDriveTargetAngle = 0;
+	rightDriveTargetAngle = 0;
+	drivePIDMultiplier = 1.0;
+	startTask(huggerPID);
+	startTask(armPID);
+	startTask(drivePostitionPID);
+	leftDriveTargetAngle = 750;
+	rightDriveTargetAngle = -750;
+	waitUntil(abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 275);
+	resetTimer();
+	hugTargetAngle = HUG_CLOSED;
+	waitUntil(abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 30);
+	waitUntil((abs(SensorValue[hugAngleSensor] - hugTargetAngle) < 350) || getTimer() > 3);
+	wait1Msec(250);
+	armTargetAngle = ARM_HIGH_FENCE - 100;
+	waitUntil(abs(SensorValue[armAngleSensor] - armTargetAngle) < 30);
+	wait1Msec(750);
+	SensorValue[leftEncoderSensor] = 0;
+	SensorValue[rightEncoderSensor] = 0;
+	leftDriveTargetAngle = 235;
+	rightDriveTargetAngle = 235;
+	waitUntil(abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 50);
+	wait1Msec(100);
+	resetTimer();
+	SensorValue[leftEncoderSensor] = 0;
+	SensorValue[rightEncoderSensor] = 0;
+	leftDriveTargetAngle = 950;
+	rightDriveTargetAngle = -950;
+	waitUntil((abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 30) || getTimer() > 5);
+	hugTargetAngle = HUG_MIDDLE;
+}
+
+task forwardAuto() {
+	resetTimer();
+	hugTargetAngle = HUG_MIDDLE;
+	armTargetAngle = ARM_HIGH_FENCE;
+	leftDriveTargetAngle = 1550;
+	rightDriveTargetAngle = -1550;
+	drivePIDMultiplier = 1.0;
+	startTask(huggerPID);
+	startTask(armPID);
+	startTask(drivePostitionPID);
+	waitUntil((abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 30) || getTimer() > 2.5);
+	wait1Msec(250);
+	armTargetAngle = ARM_UP;
+	resetTimer();
+	SensorValue[leftEncoderSensor] = 0;
+	SensorValue[rightEncoderSensor] = 0;
+	leftDriveTargetAngle = 200;
+	rightDriveTargetAngle = -200;
+	waitUntil((abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 30) || getTimer() > 1);
+	SensorValue[leftEncoderSensor] = 0;
+	SensorValue[rightEncoderSensor] = 0;
+	leftDriveTargetAngle = 0;
+	rightDriveTargetAngle = 0;
+}
+
 task autonomous() {
 	pre_auton();
 	updateSensors();
 	if (autonMode == "preloadStraight") {
 		startTask(preloadStraightAuto);
+	} else if (autonMode == "leftCube") {
+		startTask(leftCubeAuto);
+	} else if (autonMode == "rightCube") {
+		startTask(rightCubeAuto);
+	} else if (autonMode == "fastForward") {
+		startTask(forwardAuto);
 	}
 }
 
@@ -264,7 +365,7 @@ task usercontrol() {
 		}
 
 		if (RBUp){
-			hugVel = -50;
+			hugVel = -127;
 			armLocked = true;
 		} else if (!RLeft && armLocked) {
 			hugTargetAngle = hugAngle;
