@@ -6,7 +6,7 @@ Main Robot code for Vex Starstruck
 | ------ | ---------- | ----- | -------------- | ------ | ----- |
 | Drive  | Tank Drive |
 | Arm    | Full Up    | **L** | Top Bumper     | Press  |
-| Arm    | High Fence | _R_   | Left on D-Pad  | Press  | Also spreads arm out wide |
+| Arm    | High Fence | **L** | Right on D-Pad  | Press  | Also spreads arm out wide |
 | Arm    | Low Fence  | **L** | Down on D-Pad  | Press  | Also spreads arm out wide |
 | Arm    | Full Down  | **L** | Bottom Bumper  | Press  |
 | Arm    | Climb Prep | **L** | Up on D-Pad    | Press  |
