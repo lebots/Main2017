@@ -3,6 +3,10 @@
 
 int LDriveVel = 0; // Velocity of left drive
 int RDriveVel = 0; // Velocity of right drive
+int FLDriveVel = 0; // Velocity of front left drive
+int BLDriveVel = 0; // Velocity of back left drive
+int FRDriveVel = 0; // Velocity of front right drive
+int BRDriveVel = 0; // Velocity of back right drive
 int hugVel = 0; // Velocity of hug
 int armVel = 0; // Velocity of arm
 
