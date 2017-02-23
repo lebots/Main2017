@@ -6,7 +6,7 @@ Main Robot code for Vex Starstruck
 | ------ | ---------- | ----- | -------------- | ------ | ----- |
 | Drive  | Tank Drive |
 | Arm    | Full Up    | **L** | Top Bumper     | Press  |
-| Arm    | High Fence | **L** | Right on D-Pad  | Press  | Also spreads arm out wide |
+| Arm    | High Fence | **L** | Right on D-Pad | Press  | Also spreads arm out wide |
 | Arm    | Low Fence  | **L** | Down on D-Pad  | Press  | Also spreads arm out wide |
 | Arm    | Full Down  | **L** | Bottom Bumper  | Press  |
 | Arm    | Climb Prep | **L** | Up on D-Pad    | Press  |
@@ -35,3 +35,31 @@ Main Robot code for Vex Starstruck
 | ratchetAngleSensor | Pot  | 3 |
 | leftEncoderSensor  | Enc  | 1-2 |
 | rightEncoderSensor | Enc  | 3-4 |
+
+### X-Motor ports
+| Var Name | Port # |
+| -------- | ------ |
+| LHug     | 1      |
+| LArm1    | 2      |
+| RArm1    | 3      |
+| RArm2    | 4      |
+| LArm2    | 5      |
+| FLDrive  | 6      |
+| BLDrive  | 7      |
+| FRDrive  | 8      |
+| BRDrive  | 9      |
+| armLock  | 10     |
+
+### X-Sensor ports
+| Var Name           | Type | Port # |
+| ------------------ | ---- | ------ |
+| armAngleSensor     | Pot  | 1 |
+| hugAngleSensor     | Pot  | 2 |
+| ratchetAngleSensor | Pot  | 3 |
+| FLEncoderSensor    | Enc  | 1-2 |
+| BLEncoderSensor    | Enc  | 3-4 |
+| FREncoderSensor    | Enc  | 5-6 |
+| BREncoderSensor    | Enc  | 7-8 |
+| auto3              | Jump | 10 |
+| auto1              | Jump | 11 |
+| auto2              | Jump | 12 |
