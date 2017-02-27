@@ -31,6 +31,8 @@
 
 #include "./joysticks.h"
 #include "./xvar.h"
+#include "./updates.h"
+#include "./pidtasks.h"
 
 #define HUG_CLOSED 		3500
 #define HUG_OPEN		2877
@@ -47,35 +49,17 @@
 
 string autonMode = "ledAuto"; // preloadStraight, leftCube, rightCube, fastForward (rightCube has yet to be tested), ledAuto
 
-void updateMotors() {
-
-	motor[FLDrive] = FLDriveVel;
-	motor[BLDrive] = BLDriveVel;
-	motor[FRDrive] = FRDriveVel;
-	motor[BRDrive] = BRDriveVel;
-
-	motor[LHug] = hugVel;
-
-	motor[L1Arm] = armVel;
-	motor[L2Arm] = armVel;
-	motor[R1Arm] = armVel;
-	motor[R2Arm] = armVel;
-
-	motor[armLock] = armLockVel;
-}
-
-void updateSensors() {
-	armAngle = SensorValue[armAngleSensor];
-	hugAngle = SensorValue[hugAngleSensor];
-	ratchetAngle = SensorValue[ratchetAngleSensor];
-}
-
 task unlockRatchet() {
 	while (abs(SensorValue[ratchetAngleSensor] - RATCHET_LOCKED) <= RATCHET_DB) {
-		//motor[armLock] = -50;
+		armLockVel = 50;
+		updateLockMotors();
 	}
-	//motor[armLock] = 0;
+	armLockVel = 0;
+	updateLockMotors();
 }
+
+/*void resetTimer() { clearTimer(T1); }
+int getTimer() { return T1; }*/
 
 void pre_auton() {
 	bStopTasksBetweenModes = true;
@@ -88,92 +72,8 @@ void pre_auton() {
 
 	startTask(unlockRatchet);
 
-
 	armTargetAngle = armAngle;
 	hugTargetAngle = hugAngle;
-}
-
-task huggerPID() {
-	while (true) {
-		updateSensors();
-		hugError = hugAngle - hugTargetAngle;
-		hugIntegral += hugError;
-		hugDeriv = hugPrevError - hugError;
-		hugVel = (kHugP * hugError) + (0.0 * hugIntegral) + (1.0 * hugDeriv);
-		hugPrevError = hugError;
-
-		if (hugVel > 127)	hugVel = 127;
-		if (hugVel < -127)	hugVel = -127;
-		if (abs(hugVel) < 15) hugVel = 0;
-		//motor[LHug] = hugVel;
-	}
-}
-
-task armPID() {
-	while (true) {
-		updateSensors();
-		armError = -(armTargetAngle - armAngle);
-		armIntegral += armError;
-		armDeriv = armPrevError - armError;
-		armVel = (kArmP * armError) + (kArmI * armIntegral) + (kArmD * armDeriv);
-		armPrevError = armError;
-		if (armVel < -31) armVel = 31 * (armVel/127) * (-armVel/127);
-
-		if (armTargetAngle == 925 && armError < 50) armVel = 20;
-		if (abs(armVel) < 20) armVel = 0;
-
-		motor[L1Arm] = armVel;
-		motor[L2Arm] = armVel;
-		motor[R1Arm] = armVel;
-		motor[R2Arm] = armVel;
-	}
-}
-
-task drivePostitionPID() {
-	while (true) {
-		FLDriveError = FLDriveTargetAngle - SensorValue[FLEncoderSensor];
-		FLDriveIntegral += FLDriveError;
-		FLDriveDeriv = FLDrivePrevError - FLDriveError;
-		FLDriveVel = (kFLDriveP * FLDriveError) + (kFLDriveI * FLDriveIntegral) + (kFLDriveD * FLDriveDeriv);
-		FLDrivePrevError = FLDriveError;
-
-		BLDriveError = BLDriveTargetAngle - SensorValue[BLEncoderSensor];
-		BLDriveIntegral += BLDriveError;
-		BLDriveDeriv = BLDrivePrevError - BLDriveError;
-		BLDriveVel = (kBLDriveP * BLDriveError) + (kBLDriveI * BLDriveIntegral) + (kBLDriveD * BLDriveDeriv);
-		BLDrivePrevError = BLDriveError;
-
-		FRDriveError = SensorValue[FREncoderSensor] - FRDriveTargetAngle;
-		FRDriveIntegral += FRDriveError;
-		FRDriveDeriv = FRDrivePrevError - FRDriveError;
-		FRDriveVel = (kFRDriveP * FRDriveError) + (kFRDriveI * FRDriveIntegral) + (kFRDriveD * FRDriveDeriv);
-		FRDrivePrevError = FRDriveError;
-
-		BRDriveError = SensorValue[BREncoderSensor] - BRDriveTargetAngle;
-		BRDriveIntegral += BRDriveError;
-		BRDriveDeriv = BRDrivePrevError - BRDriveError;
-		BRDriveVel = (kBRDriveP * BRDriveError) + (kBRDriveI * BRDriveIntegral) + (kBRDriveD * BRDriveDeriv);
-		BRDrivePrevError = BRDriveError;
-
-		FLDriveVel *= drivePIDMultiplier;
-		BLDriveVel *= drivePIDMultiplier;
-		FRDriveVel *= drivePIDMultiplier;
-		BRDriveVel *= drivePIDMultiplier;
-
-		if (FLDriveVel > 127) FLDriveVel = 127;
-		else if (FLDriveVel < -127) FLDriveVel = -127;
-		if (BLDriveVel > 127) BLDriveVel = 127;
-		else if (BLDriveVel < -127) BLDriveVel = -127;
-		if (FRDriveVel > 127) FRDriveVel = 127;
-		else if (FRDriveVel < -127) FRDriveVel = -127;
-		if (BRDriveVel > 127) BRDriveVel = 127;
-		else if (BRDriveVel < -127) BRDriveVel = -127;
-
-		motor[FLDrive] = FLDriveVel;
-		motor[BLDrive] = BLDriveVel;
-		motor[FRDrive] = FRDriveVel;
-		motor[BRDrive] = BRDriveVel;
-	}
 }
 
 task preloadStraightAuto() {
@@ -215,53 +115,80 @@ task preloadStraightAuto() {
 	//SensorValue[rightEncoderSensor] = 0;
 	//leftDriveTargetAngle = 500;
 	//rightDriveTargetAngle = -500;
+	stopTask(preloadStraightAuto);
 }
 
 task forwardAuto() {
 	resetTimer();
 	hugTargetAngle = HUG_MIDDLE;
 	armTargetAngle = ARM_HIGH_FENCE;
-	//leftDriveTargetAngle = 1550;
-	//rightDriveTargetAngle = -1550;
+	FLDriveTargetAngle = 1250;
+	BLDriveTargetAngle = 1250;
+	FRDriveTargetAngle = 1250;
+	BRDriveTargetAngle = 1250;
 	drivePIDMultiplier = 1.0;
 	startTask(huggerPID);
 	startTask(armPID);
 	startTask(drivePostitionPID);
-	//waitUntil((abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 30) || getTimer() > 2.5);
-	wait1Msec(250);
+	waitUntil((abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30) || getTimer() > 2.5);
+	wait1Msec(750);
 	armTargetAngle = ARM_UP;
 	resetTimer();
-	//SensorValue[leftEncoderSensor] = 0;
-	//SensorValue[rightEncoderSensor] = 0;
-	//leftDriveTargetAngle = 200;
-	//rightDriveTargetAngle = -200;
-	//waitUntil((abs(SensorValue[leftEncoderSensor] - leftDriveTargetAngle) < 30) || getTimer() > 1);
-	//SensorValue[leftEncoderSensor] = 0;
-	//SensorValue[rightEncoderSensor] = 0;
-	//leftDriveTargetAngle = 0;
-	//rightDriveTargetAngle = 0;
+	stopTask(forwardAuto);
+}
+
+task leftCubeAuto() {
+	resetTimer();
+	hugTargetAngle = hugAngle;
+	armTargetAngle = ARM_DOWN;
+	FLDriveTargetAngle = 600;
+	BLDriveTargetAngle = 600;
+	FRDriveTargetAngle = 600;
+	BRDriveTargetAngle = 600;
+	drivePIDMultiplier = 1.0;
+	startTask(huggerPID);
+	startTask(armPID);
+	startTask(drivePostitionPID);
+	waitUntil(abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 310);
+	resetTimer();
+	hugTargetAngle = HUG_CLOSED;
+	waitUntil(abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30);
+	waitUntil((abs(SensorValue[hugAngleSensor] - hugTargetAngle) < 350) || getTimer() > 3);
+	wait1Msec(250);
+	armTargetAngle = ARM_HIGH_FENCE;
+	waitUntil((abs(SensorValue[armAngleSensor] - armTargetAngle) < 30));
+	SensorValue[FLEncoderSensor] = 0;
+	SensorValue[BLEncoderSensor] = 0;
+	SensorValue[FREncoderSensor] = 0;
+	SensorValue[BREncoderSensor] = 0;
+	resetTimer();
+	FLDriveTargetAngle = 0;
+	BLDriveTargetAngle = -300;
+	FRDriveTargetAngle = 0;
+	BRDriveTargetAngle = 300;
+	waitUntil(abs(SensorValue[BLEncoderSensor] - BLDriveTargetAngle) < 50);
+	SensorValue[FLEncoderSensor] = 0;
+	SensorValue[BLEncoderSensor] = 0;
+	SensorValue[FREncoderSensor] = 0;
+	SensorValue[BREncoderSensor] = 0;
+	resetTimer();
+	FLDriveTargetAngle = 700;
+	BLDriveTargetAngle = 700;
+	FRDriveTargetAngle = 700;
+	BRDriveTargetAngle = 700;
+	waitUntil(abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30);
+	stopTask(leftCubeAuto);
 }
 
 task autonomous() {
 	pre_auton();
 	updateSensors();
-	/*if (autonMode == "preloadStraight") {
-		startTask(preloadStraightAuto);
-	} else if (autonMode == "leftCube") {
-		startTask(leftCubeAuto);
-	} else if (autonMode == "rightCube") {
-		startTask(rightCubeAuto);
-	} else if (autonMode == "fastForward") {
-		startTask(forwardAuto);
-	} else if (autonMode == "ledAuto") {
-		startTask(ledAuto);
-	}*/
 
 	// UNTESTED:
 	if (SensorValue[auto1] && !SensorValue[auto2] && SensorValue[auto3]) {
 		startTask(forwardAuto);
 	} else if (!SensorValue[auto1] && SensorValue[auto2] && SensorValue[auto3]) {
-		//startTask(leftCubeAuto);
+		startTask(leftCubeAuto);
 	} else if (SensorValue[auto1] && SensorValue[auto2] && !SensorValue[auto3]) {
 		//startTask(rightCubeAuto);
 	} else {
@@ -373,6 +300,19 @@ task usercontrol() {
 		BLDriveVel = -LY + (LX / 4) - RX;
 		FRDriveVel = -LY - LX - RX;
 		BRDriveVel = -LY - (LX / 4) + RX;
+
+		if (LLeft) {
+			FLDriveVel = -127;
+			BLDriveVel = -127;
+			FRDriveVel = -127;
+			BRDriveVel = -127;
+			armVel = -127;
+		}
+
+		FLDriveVel = (abs(FLDriveVel) > 10) ? FLDriveVel : 0;
+		BLDriveVel = (abs(BLDriveVel) > 10) ? BLDriveVel : 0;
+		FRDriveVel = (abs(FRDriveVel) > 10) ? FRDriveVel : 0;
+		BRDriveVel = (abs(BRDriveVel) > 10) ? BRDriveVel : 0;
 
 		updateMotors();
 	}
