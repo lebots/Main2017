@@ -13,6 +13,7 @@ task huggerPID() {
 		if (hugVel > 127)	hugVel = 127;
 		if (hugVel < -127)	hugVel = -127;
 		if (abs(hugVel) < 15) hugVel = 0;
+		motor[LHug] = hugVel;
 	}
 }
 
@@ -38,11 +39,13 @@ task armPID() {
 
 task drivePostitionPID() {
 	while (true) {
+		FLDriveError = SensorValue[FLEncoderSensor] - FLDriveTargetAngle;
 		FLDriveIntegral += FLDriveError;
 		FLDriveDeriv = FLDrivePrevError - FLDriveError;
 		FLDriveVel = (kFLDriveP * FLDriveError) + (kFLDriveI * FLDriveIntegral) + (kFLDriveD * FLDriveDeriv);
 		FLDrivePrevError = FLDriveError;
 
+		BLDriveError = SensorValue[BLEncoderSensor] - BLDriveTargetAngle;
 		BLDriveIntegral += BLDriveError;
 		BLDriveDeriv = BLDrivePrevError - BLDriveError;
 		BLDriveVel = (kBLDriveP * BLDriveError) + (kBLDriveI * BLDriveIntegral) + (kBLDriveD * BLDriveDeriv);
