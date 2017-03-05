@@ -10,11 +10,11 @@
 #pragma config(Sensor, dgtl12, auto2,          sensorDigitalIn)
 #pragma config(Motor,  port1,           LHug,          tmotorVex393_HBridge, openLoop)
 #pragma config(Motor,  port2,           L1Arm,         tmotorVex393_MC29, openLoop, reversed)
-#pragma config(Motor,  port3,           R1Arm,         tmotorVex393_MC29, openLoop)
-#pragma config(Motor,  port4,           R2Arm,         tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port3,           FLDrive,       tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port4,           BLDrive,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port5,           L2Arm,         tmotorVex393_MC29, openLoop, reversed)
-#pragma config(Motor,  port6,           FLDrive,       tmotorVex393_MC29, openLoop)
-#pragma config(Motor,  port7,           BLDrive,       tmotorVex393_MC29, openLoop, reversed)
+#pragma config(Motor,  port6,           R1Arm,         tmotorVex393_MC29, openLoop)
+#pragma config(Motor,  port7,           R2Arm,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port8,           FRDrive,       tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port9,           BRDrive,       tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port10,          armLock,       tmotorVex393_HBridge, openLoop, reversed)
@@ -40,7 +40,7 @@
 #define HUG_CLIMBPREP	915
 #define ARM_UP			950
 #define ARM_CLIMB		1400
-#define ARM_DOWN		2800
+#define ARM_DOWN		2770
 #define ARM_HIGH_FENCE	1200
 #define ARM_LOW_FENCE	1405
 #define RATCHET_LOCKED	1100
@@ -141,14 +141,20 @@ task leftCubeAuto() {
 	resetTimer();
 	hugTargetAngle = hugAngle;
 	armTargetAngle = ARM_DOWN;
-	FLDriveTargetAngle = 600;
-	BLDriveTargetAngle = 600;
-	FRDriveTargetAngle = 600;
-	BRDriveTargetAngle = 600;
 	drivePIDMultiplier = 1.0;
 	startTask(huggerPID);
 	startTask(armPID);
 	startTask(drivePostitionPID);
+	FLDriveTargetAngle = 400;
+	BLDriveTargetAngle = 400;
+	FRDriveTargetAngle = 0;
+	BRDriveTargetAngle = 0;
+	waitUntil((abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30) || getTimer() > 2.0);
+	wait1Msec(250);
+	FLDriveTargetAngle = 600;
+	BLDriveTargetAngle = 600;
+	FRDriveTargetAngle = 600;
+	BRDriveTargetAngle = 600;
 	waitUntil(abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 310);
 	resetTimer();
 	hugTargetAngle = HUG_CLOSED;
@@ -162,21 +168,46 @@ task leftCubeAuto() {
 	SensorValue[FREncoderSensor] = 0;
 	SensorValue[BREncoderSensor] = 0;
 	resetTimer();
-	FLDriveTargetAngle = 0;
+	FLDriveTargetAngle = 200;
 	BLDriveTargetAngle = -300;
-	FRDriveTargetAngle = 0;
+	FRDriveTargetAngle = -200;
 	BRDriveTargetAngle = 300;
-	waitUntil(abs(SensorValue[BLEncoderSensor] - BLDriveTargetAngle) < 50);
+	waitUntil((abs(SensorValue[BLEncoderSensor] - BLDriveTargetAngle) < 50) || getTimer() > 1.0);
+	wait1Msec(250);
 	SensorValue[FLEncoderSensor] = 0;
 	SensorValue[BLEncoderSensor] = 0;
 	SensorValue[FREncoderSensor] = 0;
 	SensorValue[BREncoderSensor] = 0;
 	resetTimer();
-	FLDriveTargetAngle = 700;
-	BLDriveTargetAngle = 700;
-	FRDriveTargetAngle = 700;
-	BRDriveTargetAngle = 700;
-	waitUntil(abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30);
+	FLDriveTargetAngle = 800;
+	BLDriveTargetAngle = 800;
+	FRDriveTargetAngle = 800;
+	BRDriveTargetAngle = 800;
+	waitUntil((abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30) || getTimer() > 2.0);
+	hugTargetAngle = HUG_MIDDLE;
+	waitUntil((abs(SensorValue[hugAngleSensor] - hugTargetAngle) < 30) || getTimer() > 1.0);
+	SensorValue[FLEncoderSensor] = 0;
+	SensorValue[BLEncoderSensor] = 0;
+	SensorValue[FREncoderSensor] = 0;
+	SensorValue[BREncoderSensor] = 0;
+	wait1Msec(250);
+	resetTimer();
+	FLDriveTargetAngle = -200;
+	BLDriveTargetAngle = -200;
+	FRDriveTargetAngle = 0;
+	BRDriveTargetAngle = 0;
+	waitUntil((abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30) || getTimer() > 2.0);
+	SensorValue[FLEncoderSensor] = 0;
+	SensorValue[BLEncoderSensor] = 0;
+	SensorValue[FREncoderSensor] = 0;
+	SensorValue[BREncoderSensor] = 0;
+	wait1Msec(250);
+	resetTimer();
+	FLDriveTargetAngle = 100;
+	BLDriveTargetAngle = 100;
+	FRDriveTargetAngle = 100;
+	BRDriveTargetAngle = 100;
+	waitUntil((abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30) || getTimer() > 2.0);
 	stopTask(leftCubeAuto);
 }
 
