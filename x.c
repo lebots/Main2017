@@ -39,8 +39,8 @@
 #define HUG_MIDDLE 		2050
 #define HUG_CLIMBPREP	915
 #define ARM_UP			950
-#define ARM_CLIMB		1400
-#define ARM_DOWN		2770
+#define ARM_CLIMB		1495
+#define ARM_DOWN		2790
 #define ARM_HIGH_FENCE	1200
 #define ARM_LOW_FENCE	1405
 #define RATCHET_LOCKED	1100
@@ -58,17 +58,11 @@ task unlockRatchet() {
 	updateLockMotors();
 }
 
-/*void resetTimer() { clearTimer(T1); }
-int getTimer() { return T1; }*/
-
 void pre_auton() {
 	bStopTasksBetweenModes = true;
 	updateSensors();
 	resetTimer();
-	SensorValue[FLEncoderSensor] = 0;
-	SensorValue[BLEncoderSensor] = 0;
-	SensorValue[FREncoderSensor] = 0;
-	SensorValue[BREncoderSensor] = 0;
+	resetEncoders();
 
 	startTask(unlockRatchet);
 
@@ -145,77 +139,111 @@ task leftCubeAuto() {
 	startTask(huggerPID);
 	startTask(armPID);
 	startTask(drivePostitionPID);
-	FLDriveTargetAngle = 400;
-	BLDriveTargetAngle = 400;
-	FRDriveTargetAngle = 0;
-	BRDriveTargetAngle = 0;
-	waitUntil((abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30) || getTimer() > 2.0);
-	wait1Msec(250);
+
 	FLDriveTargetAngle = 600;
 	BLDriveTargetAngle = 600;
-	FRDriveTargetAngle = 600;
-	BRDriveTargetAngle = 600;
-	waitUntil(abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 310);
-	resetTimer();
-	hugTargetAngle = HUG_CLOSED;
-	waitUntil(abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30);
-	waitUntil((abs(SensorValue[hugAngleSensor] - hugTargetAngle) < 350) || getTimer() > 3);
+	FRDriveTargetAngle = 50;
+	BRDriveTargetAngle = 50;
+	waitUntil((abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30) || getTimer() > 2.0);
 	wait1Msec(250);
+
+	resetTimer();
+	SensorValue[FLEncoderSensor] = 0;
+	SensorValue[BLEncoderSensor] = 0;
+	SensorValue[FREncoderSensor] = 0;
+	SensorValue[BREncoderSensor] = 0;
+	FLDriveTargetAngle = 0;
+	BLDriveTargetAngle = 150;
+	FRDriveTargetAngle = 0;
+	BRDriveTargetAngle = -150;
+	waitUntil((abs(SensorValue[BREncoderSensor] - BRDriveTargetAngle) < 50) || getTimer() > 0.75);
+	wait1Msec(250);
+
+	resetTimer();
+	SensorValue[FLEncoderSensor] = 0;
+	SensorValue[BLEncoderSensor] = 0;
+	SensorValue[FREncoderSensor] = 0;
+	SensorValue[BREncoderSensor] = 0;
+	FLDriveTargetAngle = 400;
+	BLDriveTargetAngle = 400;
+	FRDriveTargetAngle = 400;
+	BRDriveTargetAngle = 400;
+	hugTargetAngle += 300;
+	armTargetAngle -= 200;
+	wait1Msec(250);
+
+	armTargetAngle += 200;
+	waitUntil(abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 400);
+
+	hugTargetAngle = 3275;
+	waitUntil(abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30 || getTimer() > 3);
+
+	resetTimer();
+	waitUntil((abs(SensorValue[hugAngleSensor] - hugTargetAngle) < 100) || getTimer() > 0.75);
+	wait1Msec(500);
+
 	armTargetAngle = ARM_HIGH_FENCE;
 	waitUntil((abs(SensorValue[armAngleSensor] - armTargetAngle) < 30));
+	wait1Msec(2000);
+
+	resetTimer();
 	SensorValue[FLEncoderSensor] = 0;
 	SensorValue[BLEncoderSensor] = 0;
 	SensorValue[FREncoderSensor] = 0;
 	SensorValue[BREncoderSensor] = 0;
-	resetTimer();
 	FLDriveTargetAngle = 200;
-	BLDriveTargetAngle = -300;
+	BLDriveTargetAngle = -400;
 	FRDriveTargetAngle = -200;
-	BRDriveTargetAngle = 300;
+	BRDriveTargetAngle = 400;
 	waitUntil((abs(SensorValue[BLEncoderSensor] - BLDriveTargetAngle) < 50) || getTimer() > 1.0);
-	wait1Msec(250);
+	wait1Msec(2000);
+
+	resetTimer();
 	SensorValue[FLEncoderSensor] = 0;
 	SensorValue[BLEncoderSensor] = 0;
 	SensorValue[FREncoderSensor] = 0;
 	SensorValue[BREncoderSensor] = 0;
-	resetTimer();
-	FLDriveTargetAngle = 800;
-	BLDriveTargetAngle = 800;
-	FRDriveTargetAngle = 800;
-	BRDriveTargetAngle = 800;
-	waitUntil((abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30) || getTimer() > 2.0);
+	FLDriveTargetAngle = 700;
+	BLDriveTargetAngle = 700;
+	FRDriveTargetAngle = 700;
+	BRDriveTargetAngle = 700;
+	waitUntil((abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30) || getTimer() > 1.5);
+
 	hugTargetAngle = HUG_MIDDLE;
+	resetTimer();
 	waitUntil((abs(SensorValue[hugAngleSensor] - hugTargetAngle) < 30) || getTimer() > 1.0);
+	wait1Msec(250);
+
+	resetTimer();
 	SensorValue[FLEncoderSensor] = 0;
 	SensorValue[BLEncoderSensor] = 0;
 	SensorValue[FREncoderSensor] = 0;
 	SensorValue[BREncoderSensor] = 0;
-	wait1Msec(250);
-	resetTimer();
-	FLDriveTargetAngle = -200;
-	BLDriveTargetAngle = -200;
+	FLDriveTargetAngle = -525;
+	BLDriveTargetAngle = -525;
 	FRDriveTargetAngle = 0;
 	BRDriveTargetAngle = 0;
 	waitUntil((abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30) || getTimer() > 2.0);
+
+	armTargetAngle = ARM_LOW_FENCE;
+	wait1Msec(250);
+	resetTimer();
 	SensorValue[FLEncoderSensor] = 0;
 	SensorValue[BLEncoderSensor] = 0;
 	SensorValue[FREncoderSensor] = 0;
 	SensorValue[BREncoderSensor] = 0;
-	wait1Msec(250);
-	resetTimer();
-	FLDriveTargetAngle = 100;
-	BLDriveTargetAngle = 100;
-	FRDriveTargetAngle = 100;
-	BRDriveTargetAngle = 100;
+	FLDriveTargetAngle = 350;
+	BLDriveTargetAngle = 350;
+	FRDriveTargetAngle = 350;
+	BRDriveTargetAngle = 350;
 	waitUntil((abs(SensorValue[FLEncoderSensor] - FLDriveTargetAngle) < 30) || getTimer() > 2.0);
+
 	stopTask(leftCubeAuto);
 }
 
 task autonomous() {
 	pre_auton();
-	updateSensors();
 
-	// UNTESTED:
 	if (SensorValue[auto1] && !SensorValue[auto2] && SensorValue[auto3]) {
 		startTask(forwardAuto);
 	} else if (!SensorValue[auto1] && SensorValue[auto2] && SensorValue[auto3]) {
@@ -238,7 +266,7 @@ task usercontrol() {
 		/*
 		* Arm Code :/
 		*/
-		if (LLeft) {
+		if (LLeft || LLeft_s) {
 			armVel = -127;
 			climbing = true;
 		} else {
@@ -310,10 +338,10 @@ task usercontrol() {
 		}
 
 		if (getTimer() >= 1) {
-			if (RUp){
+			if (RUp || RUp_s){
 				armLockVel = 50;
 				armLocked = true;
-			} else if (RDown) {
+			} else if (RDown || RDown_s) {
 				armLockVel = -50;
 			} else if (!LRight && armLocked) {
 				hugTargetAngle = hugAngle;
@@ -332,7 +360,12 @@ task usercontrol() {
 		FRDriveVel = -LY - LX - RX;
 		BRDriveVel = -LY - (LX / 4) + RX;
 
-		if (LLeft) {
+		FLDriveVel += -LY_s + LX_s + RX_s;
+		BLDriveVel += -LY_s + (LX_s / 4) - RX_s;
+		FRDriveVel += -LY_s - LX_s - RX_s;
+		BRDriveVel += -LY_s - (LX_s / 4) + RX_s;
+
+		if (LLeft || LLeft_s) {
 			FLDriveVel = -127;
 			BLDriveVel = -127;
 			FRDriveVel = -127;

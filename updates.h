@@ -35,4 +35,11 @@ void updateSensors() {
 	ratchetAngle = SensorValue[ratchetAngleSensor];
 }
 
+void resetEncoders() {
+	SensorValue[FLEncoderSensor] = 0;
+	SensorValue[BLEncoderSensor] = 0;
+	SensorValue[FREncoderSensor] = 0;
+	SensorValue[BREncoderSensor] = 0;
+}
+
 #endif

@@ -4,7 +4,7 @@ Main Robot code for Vex Starstruck
 ### Controls
 | Mech.  | Desc.      | L/R   | Axis/Button    | Action | Notes |
 | ------ | ---------- | ----- | -------------- | ------ | ----- |
-| Drive  | Tank Drive |
+| Drive  | Omni-direc |
 | Arm    | Full Up    | **L** | Top Bumper     | Press  |
 | Arm    | High Fence | **L** | Right on D-Pad | Press  | Also spreads arm out wide |
 | Arm    | Low Fence  | **L** | Down on D-Pad  | Press  | Also spreads arm out wide |
@@ -16,6 +16,14 @@ Main Robot code for Vex Starstruck
 | Hugger | Close      | _R_   | Top Bumper     | Hold   |
 | Hugger | 90°        | _R_   | Bottom Bumper  | Press  |
 | Hugger | 180°       | _R_   | Right on D-Pad | Press  |
+
+### Secondary Controls
+| Mech.  | Desc.      | L/R   | Axis/Button    | Action | Notes |
+| ------ | ---------- | ----- | -------------- | ------ | ----- |
+| Drive  | Omni-direc |
+| Arm    | Climb      | **L** | Left on D-Pad  | Hold   | Also runs drive motors forward |
+| Arm    | Lock       | _R_   | Up on D-Pad    | Hold   |
+| Arm    | Unlock     | _R_   | Down on D-Pad  | Hold   |
 
 ### Motor ports
 | Var Name | Port # |
